@@ -1,0 +1,14 @@
+[Unit]
+Description=Cloud-Shield tunnel
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=OneShot
+RemainAfterExit=true
+User=root
+ExecStart=/usr/local/bin/cstunnel up
+ExecStop=/usr/local/bin/cstunnel down
+
+[Install]
+WantedBy=multi-user.target

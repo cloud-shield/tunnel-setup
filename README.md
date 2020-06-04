@@ -1,2 +1,35 @@
-# tunnel-setup
-Helper for setup GRE/IPIP tunnel between client machine and Cloud-Shield
+## tunnel-setup
+Tool for setuping GRE/IPIP tunnel between client's server and Cloud-Shield network.
+
+[Cloud-Shield.ru](https://cloud-shield.ru) provides DDoS protection for remote servers, services and web sites.
+
+
+You should have an active product for using this script.
+
+You can get a Secret **KEY** at the product details page on our site.
+
+## Requirements
+```
+curl wget traceroute jq
+```
+
+## Installation
+```Shell
+curl -sL https://raw.githubusercontent.com/cloud-shield/tunnel-setup/master/setup.sh
+chmod +x setup.sh
+./setup.sh install your_secret_key_here
+```
+
+## Usage
+```
+systemctl start cstunnel
+systemctl stop cstunnel
+```
+
+## TODO
+
+- [ ] One line code installer
+- [ ] CentOS (yum) compatibility
+- [ ] CI tests for different system types
+- [ ] better exception handling in tun_up func
+- [ ] tunnel self test (health & etc)
