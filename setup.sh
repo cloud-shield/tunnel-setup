@@ -30,16 +30,16 @@ function install {
     # dependencies
     echo -n 'Checking dependencies...' >&2
     DEP_INST=0
-    which jq || DEP_INST=1
-    which wget || DEP_INST=1
-    which curl || DEP_INST=1
-    which traceroute || DEP_INST=1
+    which jq > /dev/null || DEP_INST=1
+    which wget > /dev/null || DEP_INST=1
+    which curl > /dev/null || DEP_INST=1
+    which traceroute > /dev/null || DEP_INST=1
 
     if [[ "$DEP_INST" != '0' ]]; then
         echo -n ' Installing...' >&2
         apt-get -y -qq update && apt-get -y -qq install jq wget curl traceroute
     fi
-    echo -n ' Dep: OK.' >&2
+    echo -n ' OK.' >&2
 
     # cstunnel.sh
     if ! wget --quiet --output-document="$TUN_SH_PATH".tmp "$TUN_SH_URL" ; then
@@ -67,12 +67,12 @@ function install {
     # Getting params
     KEY=$2
     CSPARAMS_URL="https://cloud-shield.ru/tunnel-params.php?key="$KEY""
-    res=$(curl -s "$CSPARAMS_URL")
-    CS_REMOTE_IP=$(echo $res | jq .cs-remote-ip)
-    CS_PROTECT_IP=$(echo $res | jq .cs-protect-ip)
-    TUN_TYPE=$(echo $res | jq .tun-type)
+    res=$(curl -s -H "cs-tunnel-scr: 1" "$CSPARAMS_URL")
+    CS_REMOTE_IP=$(echo $res | jq -r .cs_remote_ip)
+    CS_PROTECT_IP=$(echo $res | jq -r .cs_protect_ip)
+    TUN_TYPE=$(echo $res | jq -r .tun_type)
 
-    if [[ ! -z "$CS_REMOTE_IP" ]] && [[ ! -z "$CS_PROTECT_IP" ]] && [[ ! -z "$TUN_TYPE" ]]; then
+    if [[ -z "$CS_REMOTE_IP" ]] || [[ -z "$CS_PROTECT_IP" ]] || [[ -z "$TUN_TYPE" ]]; then
         echo "Failed: Error while trying to get params from CS!"
         exit 1
     fi
@@ -80,7 +80,7 @@ function install {
     IFDEV=$(ip route get 8.8.8.8 | awk '{printf $5}')
     LOCAL_IP=$(curl -s https://ipinfo.io/ip)
 
-    if [[ ! -z "$IFDEV" ]] && [[ ! -z "$LOCAL_IP" ]]; then
+    if [[ -z "$IFDEV" ]] || [[ -z "$LOCAL_IP" ]]; then
         echo "Failed: Error while trying to get local params!"
         exit 1
     fi
@@ -88,11 +88,11 @@ function install {
     echo -n ' Getting params: OK.' >&2
 
     # Setting params
-    sed -i 's/replace-me_ifdev-name/$IFDEV/g' "$TUN_SH_PATH"
-    sed -i 's/replace-me_local-ip/$LOCAL_IP/g' "$TUN_SH_PATH"
-    sed -i 's/replace-me_cs-remote-ip/$CS_REMOTE_IP/g' "$TUN_SH_PATH"
-    sed -i 's/replace-me_cs-protect-ip/$CS_PROTECT_IP/g' "$TUN_SH_PATH"
-    sed -i 's/replace-me_tun-type/$TUN_TYPE/g' "$TUN_SH_PATH"
+    sed -i "s/replace-me_ifdev-name/$IFDEV/g" "$TUN_SH_PATH"
+    sed -i "s/replace-me_local-ip/$LOCAL_IP/g" "$TUN_SH_PATH"
+    sed -i "s/replace-me_cs-remote-ip/$CS_REMOTE_IP/g" "$TUN_SH_PATH"
+    sed -i "s/replace-me_cs-protect-ip/$CS_PROTECT_IP/g" "$TUN_SH_PATH"
+    sed -i "s/replace-me_tun-type/$TUN_TYPE/g" "$TUN_SH_PATH"
 
     echo -n ' Setting params: OK.' >&2
 

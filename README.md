@@ -15,7 +15,7 @@ curl wget traceroute jq
 
 ## Installation
 ```Shell
-curl -sL https://raw.githubusercontent.com/cloud-shield/tunnel-setup/master/setup.sh
+wget https://raw.githubusercontent.com/cloud-shield/tunnel-setup/master/setup.sh -O setup.sh
 chmod +x setup.sh
 ./setup.sh install your_secret_key_here
 ```

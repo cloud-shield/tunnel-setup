@@ -57,7 +57,7 @@ function tun_up {
             echo You need to set up "$TUN_PREFIX"_route table yourself. >&2
             exit
         else
-            echo ' '$OFFSET' "$TUN_PREFIX"_route' >> /etc/iproute2/rt_tables
+            echo ' '$OFFSET' '$TUN_PREFIX'_route' >> /etc/iproute2/rt_tables
         fi
     fi
 
