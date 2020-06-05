@@ -65,6 +65,7 @@ function install {
     echo -n ' Systemd script: OK.' >&2
 
     # Getting params
+    ## Demo key: test-secret-key
     KEY=$2
     CSPARAMS_URL="https://cloud-shield.ru/tunnel-params.php?key="$KEY""
     res=$(curl -s -H "cs-tunnel-scr: 1" "$CSPARAMS_URL")
