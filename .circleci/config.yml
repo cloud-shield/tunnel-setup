@@ -5,25 +5,24 @@ jobs:
       - image: ubuntu:focal-20200423
     steps:
       - checkout
-      - run: setup.sh install test-secret-key
+      - run: ./setup.sh install test-secret-key
 
   ubuntu1804:
     docker:
       - image: ubuntu:bionic-20200403
     steps:
       - checkout
-      - run: setup.sh install test-secret-key
+      - run: ./setup.sh install test-secret-key
 
   centos8:
     docker:
       - image: centos:centos8.1.1911
     steps:
       - checkout
-      - run: setup.sh install test-secret-key
+      - run: ./setup.sh install test-secret-key
 workflows:
   version: 2
   all_distros:
     jobs:
       - ubuntu1804
-      - ubuntu2004
       - centos8
