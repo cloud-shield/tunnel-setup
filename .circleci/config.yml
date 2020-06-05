@@ -1,0 +1,29 @@
+version: 2.1
+jobs:
+  ubuntu2004:
+    docker:
+      - image: ubuntu:focal-20200423
+    steps:
+      - checkout
+      - run: bash -e setup.sh
+
+  ubuntu1804:
+    docker:
+      - image: ubuntu:bionic-20200403
+    steps:
+      - checkout
+      - run: bash -e setup.sh
+
+  centos8:
+    docker:
+      - image: centos:centos8.1.1911
+    steps:
+      - checkout
+      - run: bash -e setup.sh
+workflows:
+  version: 2
+  all_distros:
+    jobs:
+      - ubuntu1804
+      - ubuntu2004
+      - centos8
