@@ -3,7 +3,7 @@
 ###################################################################################
 ##
 ## Cloud-Shield Linux/BSD install script for Tunnel Configurator
-## Version: 1.0
+## Version: 1.1
 ## https://github.com/cloud-shield/tunnel-setup
 ##
 ## https://cloud-shield.ru
@@ -23,21 +23,33 @@ SYSD_PATH="/etc/systemd/system/cstunnel.service"
 function install {
     if [ -z "$2" ]; then
         echo "Key is empty. Please provide a secret key"
-        echo "Usage: $0 install (up|down|debug)"
+        echo "Usage: $0 install your_secret_key_here"
         exit 1
     fi
 
     # dependencies
     echo -n 'Checking dependencies...' >&2
     DEP_INST=0
+    PM=""
     which jq > /dev/null || DEP_INST=1
     which wget > /dev/null || DEP_INST=1
     which curl > /dev/null || DEP_INST=1
     which traceroute > /dev/null || DEP_INST=1
+    which apt-get > /dev/null && PM="deb"
+    which yum > /dev/null && PM="yum"
 
     if [[ "$DEP_INST" != '0' ]]; then
         echo -n ' Installing...' >&2
-        apt-get -y -qq update && apt-get -y -qq install jq wget curl traceroute
+
+        if [[ "$PM" == 'deb' ]]; then
+            apt-get -y -qq update && apt-get -y -qq install jq wget curl traceroute
+        elif [[ "$PM" == 'yum' ]]; then
+            yum -y -q update && yum -y -q install jq wget curl traceroute
+        else
+            echo "Failed: You have to manually install: jq wget curl traceroute"
+            exit 1
+        fi
+
     fi
     echo -n ' OK.' >&2
 
@@ -66,11 +78,13 @@ function install {
 
     # Getting params
     KEY=$2
-    CSPARAMS_URL="https://cloud-shield.ru/tunnel-params.php?key="$KEY""
-    res=$(curl -s -H "cs-tunnel-scr: 1" "$CSPARAMS_URL")
+    CSPARAMS_URL="https://cloud-shield.ru/api/tunnel-params.php?key="$KEY""
+    res=$(curl -s -k -H "cs-tunnel-scr: 1" "$CSPARAMS_URL")
     CS_REMOTE_IP=$(echo $res | jq -r .cs_remote_ip)
     CS_PROTECT_IP=$(echo $res | jq -r .cs_protect_ip)
+    LOCAL_IP=$(echo $res | jq -r .client_ip)
     TUN_TYPE=$(echo $res | jq -r .tun_type)
+    CS_PROTECT_ADD_IPS=$(echo $res | jq -r .add_ips)
 
     if [[ -z "$CS_REMOTE_IP" ]] || [[ -z "$CS_PROTECT_IP" ]] || [[ -z "$TUN_TYPE" ]]; then
         echo "Failed: Error while trying to get params from CS!"
@@ -78,12 +92,12 @@ function install {
     fi
 
     IFDEV=$(ip route get 8.8.8.8 | awk '{printf $5}')
-    LOCAL_IP=$(curl -s https://ipinfo.io/ip)
+    # LOCAL_IP=$(curl -s https://ipinfo.io/ip)
 
-    if [[ -z "$IFDEV" ]] || [[ -z "$LOCAL_IP" ]]; then
-        echo "Failed: Error while trying to get local params!"
-        exit 1
-    fi
+    # if [[ -z "$IFDEV" ]] || [[ -z "$LOCAL_IP" ]]; then
+    #     echo "Failed: Error while trying to get local params!"
+    #     exit 1
+    # fi
 
     echo -n ' Getting params: OK.' >&2
 
@@ -100,18 +114,20 @@ function install {
     echo ' done'. >&2
 
     echo -n 'Starting tunnel...' >&2
+    systemctl stop cstunnel
     systemctl start cstunnel
     echo ' done'. >&2
 
     echo 'Usage: systemctl start cstunnel'
     echo 'Usage: systemctl stop cstunnel'
+    echo 'Usage: cstunnel debug'
 }
 
 function uninstall {
     echo -n Removing... >&2
 
     systemctl stop cstunnel
-    bash "$TUN_SH_PATH" down
+    bash "$TUN_SH_PATH" down >/dev/null
     rm "$TUN_SH_PATH"
     rm "$SYSD_PATH"
     #TODO: clear rt_tables
@@ -125,7 +141,7 @@ function debug {
     date
     echo "=== SYS ==="
     uname -a
-    lsb_release -a
+    cat /etc/os-release
     echo "=== IP ADDR ==="
     ip addr
     echo "=== IP LINK ==="
@@ -137,7 +153,7 @@ case "$1" in
     "install")
         install $@
     ;;
-    "remove")
+    "uninstall")
         uninstall
     ;;
     "debug")

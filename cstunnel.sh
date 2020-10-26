@@ -3,7 +3,7 @@
 ###################################################################################
 ##
 ## Cloud-Shield Linux/BSD install script for Tunnel Configurator
-## Version: 1.0
+## Version: 1.1
 ## https://github.com/cloud-shield/tunnel-setup
 ##
 ## https://cloud-shield.ru
@@ -13,7 +13,7 @@
 
 ### PARAMS ###
 
-# IFDEV example: eth0 / ens18
+# IFDEV example: eth0 or ens18
 IFDEV=replace-me_ifdev-name
 # Your server IP
 LOCAL_IP=replace-me_local-ip
@@ -21,7 +21,7 @@ LOCAL_IP=replace-me_local-ip
 CS_REMOTE_IP=replace-me_cs-remote-ip
 # Get from CS
 CS_PROTECT_IP=replace-me_cs-protect-ip
-# TUN_TYPE: GRE / IPIP
+# TUN_TYPE: gre/ipip
 TUN_TYPE=replace-me_tun-type
 
 TUN_PREFIX=cstun1
@@ -29,6 +29,7 @@ TUN_PREFIX=cstun1
 ###################################################################################
 
 OFFSET=40
+CS_PROTECT_GW=$(echo $CS_PROTECT_IP | sed -r "s/([0-9]+)$/1/")
 
 function tun_up {
     if ip link sh "$TUN_PREFIX" &>/dev/null; then
@@ -86,7 +87,7 @@ function debug {
     date
     echo "=== SYS ==="
     uname -a
-    lsb_release -a
+    cat /etc/os-release
     echo "=== IP ADDR ==="
     ip addr
     echo "=== IP LINK ==="
@@ -94,21 +95,35 @@ function debug {
     echo "=== IP RULE ==="
     ip rule
     echo "=== IP ROUTE ==="
+    echo "# ip route"
     ip route
+    echo "# ip route show table $OFFSET"
+    ip route show table $OFFSET
     echo "=== NETSTAT ==="
+    echo "# netstat -tunap"
     netstat -tunap
     echo "=== PING (ENDPOINTS) ==="
+    echo "# ping $CS_PROTECT_IP -n -c 4 -w 1"
     ping $CS_PROTECT_IP -n -c 4 -w 1
     echo "=== TRACEROUTE (ENDPOINTS) ==="
+    echo "# traceroute $CS_PROTECT_IP -n -w 2"
     traceroute $CS_PROTECT_IP -n -w 2
     echo "=== PING (GATEWAYS) ==="
+    echo "# ping $CS_REMOTE_IP -n -c 4 -w 1"
     ping $CS_REMOTE_IP -n -c 4 -w 1
+    echo "# ping -I $TUN_PREFIX $CS_PROTECT_GW -n -c 4 -w 1"
+    ping -I $TUN_PREFIX $CS_PROTECT_GW -n -c 4 -w 1
     echo "=== ROUTES (GATEWAYS) ==="
+    echo "# ip route get $CS_REMOTE_IP"
     ip route get $CS_REMOTE_IP
     echo "=== ROUTES (ENDPOINTS) ==="
+    echo "# ip route get $CS_PROTECT_IP"
     ip route get $CS_PROTECT_IP
     echo "=== IPTABLES-SAVE ==="
     iptables-save
+    echo "=== CURL (TUN) ==="
+    echo "# curl --interface $TUN_PREFIX --connect-timeout 5 https://ipinfo.io"
+    curl --interface $TUN_PREFIX --connect-timeout 5 https://ipinfo.io
     echo "=== TUNNEL DEBUG END ==="
 }
 
