@@ -3,7 +3,7 @@
 ###################################################################################
 ##
 ## Cloud-Shield Linux/BSD install script for Tunnel Configurator
-## Version: 1.1
+## Version: 1.2
 ## https://github.com/cloud-shield/tunnel-setup
 ##
 ## https://cloud-shield.ru
@@ -80,24 +80,26 @@ function install {
     KEY=$2
     CSPARAMS_URL="https://cloud-shield.ru/api/tunnel-params.php?key="$KEY""
     res=$(curl -s -k -H "cs-tunnel-scr: 1" "$CSPARAMS_URL")
-    CS_REMOTE_IP=$(echo $res | jq -r .cs_remote_ip)
-    CS_PROTECT_IP=$(echo $res | jq -r .cs_protect_ip)
-    LOCAL_IP=$(echo $res | jq -r .client_ip)
-    TUN_TYPE=$(echo $res | jq -r .tun_type)
-    CS_PROTECT_ADD_IPS=$(echo $res | jq -r .add_ips)
+    CS_REMOTE_IP=$(echo $res | jq -rc .cs_remote_ip)
+    LOCAL_IP=$(echo $res | jq -rc .client_ip)
+    TUN_TYPE=$(echo $res | jq -rc .tun_type)
+    CS_PROTECTED_IPS=$(echo $res | jq -rc .cs_protected_ips | sed 's/,/ /g' | sed 's/\[/(/g' | sed 's/\]/)/g')
 
-    if [[ -z "$CS_REMOTE_IP" ]] || [[ -z "$CS_PROTECT_IP" ]] || [[ -z "$TUN_TYPE" ]]; then
+    if [[ -z "$CS_REMOTE_IP" ]] || [[ -z "$CS_PROTECTED_IPS" ]] || [[ -z "$TUN_TYPE" ]]; then
         echo "Failed: Error while trying to get params from CS!"
         exit 1
     fi
 
     IFDEV=$(ip route get 8.8.8.8 | awk '{printf $5}')
-    # LOCAL_IP=$(curl -s https://ipinfo.io/ip)
 
-    # if [[ -z "$IFDEV" ]] || [[ -z "$LOCAL_IP" ]]; then
-    #     echo "Failed: Error while trying to get local params!"
-    #     exit 1
-    # fi
+    if [[ -z "$LOCAL_IP" ]]; then
+        LOCAL_IP=$(curl -s https://ipinfo.io/ip)
+    fi
+
+    if [[ -z "$IFDEV" ]] || [[ -z "$LOCAL_IP" ]]; then
+        echo "Failed: Error while trying to get local params!"
+        exit 1
+    fi
 
     echo -n ' Getting params: OK.' >&2
 
@@ -105,7 +107,7 @@ function install {
     sed -i "s/replace-me_ifdev-name/$IFDEV/g" "$TUN_SH_PATH"
     sed -i "s/replace-me_local-ip/$LOCAL_IP/g" "$TUN_SH_PATH"
     sed -i "s/replace-me_cs-remote-ip/$CS_REMOTE_IP/g" "$TUN_SH_PATH"
-    sed -i "s/replace-me_cs-protect-ip/$CS_PROTECT_IP/g" "$TUN_SH_PATH"
+    sed -i "s/replace-me_cs-protected-ips/$CS_PROTECTED_IPS/g" "$TUN_SH_PATH"
     sed -i "s/replace-me_tun-type/$TUN_TYPE/g" "$TUN_SH_PATH"
 
     echo -n ' Setting params: OK.' >&2
@@ -137,6 +139,8 @@ function uninstall {
 }
 
 function debug {
+    #TODO: show script version
+    #TODO: print head -x of /usr/local/bin/cstunnel for vars
     echo "=== DATE ==="
     date
     echo "=== SYS ==="

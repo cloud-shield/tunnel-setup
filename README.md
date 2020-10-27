@@ -29,7 +29,7 @@ systemctl stop cstunnel
 ## TODO
 
 - [ ] One line code installer
-- [ ] Additional protected IPs support
+- [x] Additional protected IPs support
 - [x] CentOS (yum) compatibility
 - [ ] CI tests for different system types
 - [ ] better exception handling in tun_up func

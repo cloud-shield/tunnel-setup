@@ -3,7 +3,7 @@
 ###################################################################################
 ##
 ## Cloud-Shield Linux/BSD install script for Tunnel Configurator
-## Version: 1.1
+## Version: 1.2
 ## https://github.com/cloud-shield/tunnel-setup
 ##
 ## https://cloud-shield.ru
@@ -20,7 +20,9 @@ LOCAL_IP=replace-me_local-ip
 # Get from CS
 CS_REMOTE_IP=replace-me_cs-remote-ip
 # Get from CS
-CS_PROTECT_IP=replace-me_cs-protect-ip
+CS_PROTECTED_IPS=replace-me_cs-protected-ips
+CS_PROTECT_IP=${CS_PROTECTED_IPS[0]}
+
 # TUN_TYPE: gre/ipip
 TUN_TYPE=replace-me_tun-type
 
@@ -65,10 +67,15 @@ function tun_up {
     echo -n Setting up tunnel... >&2
 
     ip tunnel add "$TUN_PREFIX" mode $TUN_TYPE local $LOCAL_IP remote $CS_REMOTE_IP ttl 64 dev $IFDEV
-
-    ip address add $CS_PROTECT_IP/32 dev "$TUN_PREFIX"
+    #ip address add $CS_PROTECT_IP/32 dev "$TUN_PREFIX"
     ip link set "$TUN_PREFIX" up
-    ip rule add from $CS_PROTECT_IP table "$TUN_PREFIX"_route
+
+    for PIP in "${CS_PROTECTED_IPS[@]}"; do
+        ip address add "$PIP"/32 dev "$TUN_PREFIX"
+        ip rule add from "$PIP" table "$TUN_PREFIX"_route
+    done
+
+    #ip rule add from $CS_PROTECT_IP table "$TUN_PREFIX"_route
     ip route add default dev "$TUN_PREFIX" table "$TUN_PREFIX"_route
 
     echo ' done'. >&2
@@ -83,6 +90,8 @@ function tun_down {
 function debug {
     #TODO: add checks if netstat and traceroute are exist
     #TODO: replace netstat to ss
+    #TODO: show script version
+    #TODO: print head -x of /usr/local/bin/cstunnel for vars
     echo "=== DATE ==="
     date
     echo "=== SYS ==="
