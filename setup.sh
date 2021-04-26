@@ -91,6 +91,7 @@ function install {
     fi
 
     IFDEV=$(ip route get 8.8.8.8 | awk '{printf $5}')
+    LOCAL_IP=$(ip route get 8.8.8.8 | awk '{printf $7}')
 
     if [[ -z "$LOCAL_IP" ]]; then
         LOCAL_IP=$(curl -s https://ipinfo.io/ip)
