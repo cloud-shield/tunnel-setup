@@ -1,5 +1,5 @@
 ## tunnel-setup
-Tool for setuping GRE/IPIP tunnel between client's server and Cloud-Shield network.
+Tool for setuping GRE/IPIP tunnel between client's Linux server and Cloud-Shield network.
 
 [Cloud-Shield.ru](https://cloud-shield.ru) provides DDoS protection for remote servers, services and web sites.
 
@@ -29,8 +29,6 @@ systemctl stop cstunnel
 ## TODO
 
 - [ ] One line code installer
-- [x] Additional protected IPs support
-- [x] CentOS (yum) compatibility
 - [ ] CI tests for different system types
 - [ ] better exception handling in tun_up func
 - [ ] tunnel self test (health & etc)

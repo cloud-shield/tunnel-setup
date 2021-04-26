@@ -3,7 +3,7 @@
 ###################################################################################
 ##
 ## Cloud-Shield Linux/BSD install script for Tunnel Configurator
-## Version: 1.2
+## Version: 1.3
 ## https://github.com/cloud-shield/tunnel-setup
 ##
 ## https://cloud-shield.ru
