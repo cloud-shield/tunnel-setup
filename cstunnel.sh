@@ -27,6 +27,8 @@ CS_PROTECT_IP=${CS_PROTECTED_IPS[0]}
 TUN_TYPE=replace-me_tun-type
 
 TUN_PREFIX=cstun1
+# TUN_MTU: 1476 / 1400
+TUN_MTU=1476
 
 ###################################################################################
 
@@ -68,7 +70,7 @@ function tun_up {
 
     ip tunnel add "$TUN_PREFIX" mode $TUN_TYPE local $LOCAL_IP remote $CS_REMOTE_IP ttl 64 dev $IFDEV
     #ip address add $CS_PROTECT_IP/32 dev "$TUN_PREFIX"
-    ip link set "$TUN_PREFIX" up
+    ip link set "$TUN_PREFIX" mtu "$TUN_MTU" up
 
     for PIP in "${CS_PROTECTED_IPS[@]}"; do
         ip address add "$PIP"/32 dev "$TUN_PREFIX"
